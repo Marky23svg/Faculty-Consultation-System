@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-canvas: #f5f7fb;
+  --color-navy: #1e3e77;
+
+  --color-blue-50: #edf3ff;
+  --color-blue-100: #e5edff;
+  --color-blue-200: #c9daf9;
+  --color-blue-300: #a9c4f5;
+  --color-blue-400: #6f9aeb;
+  --color-blue-500: #467bdf;
+  --color-blue-600: #2d65d5;
+  --color-blue-700: #2457bd;
+  --color-blue-800: #1e4696;
+  --color-blue-900: #1b3a7a;
+
+  --color-slate-50: #f7f8fc;
+  --color-slate-100: #f1f4f9;
+  --color-slate-200: #e9edf4;
+  --color-slate-300: #d7dee9;
+  --color-slate-400: #98a1b1;
+  --color-slate-500: #7b8497;
+  --color-slate-600: #667287;
+  --color-slate-700: #46536a;
+  --color-slate-800: #202b3c;
+  --color-slate-900: #172238;
+  --color-slate-950: #0f172a;
+
+  --color-emerald-50: #e8f7ef;
+  --color-emerald-100: #d7ece0;
+  --color-emerald-200: #b9ddca;
+  --color-emerald-500: #2fa879;
+  --color-emerald-600: #259668;
+  --color-emerald-700: #21865e;
+
+  --color-amber-50: #fff5df;
+  --color-amber-100: #f7ebce;
+  --color-amber-200: #f2ddb0;
+  --color-amber-600: #b57a18;
+  --color-amber-700: #9b6611;
+}
+
+:root {
+  font-family: var(--font-sans);
+  color: #202b3c;
+  background-color: #f5f7fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #f5f7fb;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}

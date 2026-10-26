@@ -1,0 +1,14 @@
+# Global Dependencies
+**/node_modules/
+
+# Global Environment Variables (CRITICAL!)
+**/.env
+**/.env.*
+
+# Global Build Output
+**/dist/
+**/build/
+
+# OS files
+.DS_Store
+Thumbs.db
