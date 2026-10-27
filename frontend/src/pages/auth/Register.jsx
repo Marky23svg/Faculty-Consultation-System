@@ -65,11 +65,11 @@ export default function Register() {
         {/* Center copy */}
         <div className="relative z-10 flex-1 flex flex-col justify-center max-w-lg">
           <h1 className="text-5xl font-extrabold leading-tight tracking-tight text-white">
-            Join the<br />Community!
+            Hello, There<br />Students!
           </h1>
           <p className="mt-6 text-medium font-light leading-relaxed text-blue-100">
-            Create your student account to easily book face-to-face consultations, 
-            manage your schedule, and stay connected with your professors throughout the semester.
+            A centralized platform designed to optimize academic advising. Browse faculty availability, 
+            secure consultation slots, and foster a more connected campus experience.
           </p>
         </div>
 
