@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Clock3, Info, MapPin, Users } from 'lucide-react'
+import { Clock3, Info, MapPin, Trash2, Users } from 'lucide-react'
 import api from '../../api/client'
 import Alert from '../../components/Alert'
 import Button from '../../components/Button'
@@ -10,56 +10,99 @@ import PageHeader from '../../components/PageHeader'
 import { getErrorMessage } from '../../utils/errors'
 import { timeToMinutes } from '../../utils/format'
 
-const INITIAL_FORM = {
-  date: '',
-  startTime: '',
-  endTime: '',
-  topic: '',
-  location: '',
-}
-
 export default function ManageSchedule() {
-  const [form, setForm] = useState(INITIAL_FORM)
+  const [date, setDate] = useState('')
+  const [topic, setTopic] = useState('')
+  const [location, setLocation] = useState('')
+  const [timeSlots, setTimeSlots] = useState([{ startTime: '', endTime: '' }])
+
   const [fieldErrors, setFieldErrors] = useState({})
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  function handleChange(event) {
-    const { name, value } = event.target
-    setForm((current) => ({ ...current, [name]: value }))
-    setFieldErrors((current) => ({ ...current, [name]: '' }))
+  function handleTimeSlotChange(index, field, value) {
+    setTimeSlots((prev) =>
+      prev.map((slot, i) => (i === index ? { ...slot, [field]: value } : slot)),
+    )
+    setFieldErrors((prev) => {
+      const errorKey = `slot_${index}_${field}`
+      if (prev[errorKey]) {
+        const next = { ...prev }
+        delete next[errorKey]
+        return next
+      }
+      return prev
+    })
+  }
+
+  function handleAddTimeSlot() {
+    setTimeSlots((prev) => [...prev, { startTime: '', endTime: '' }])
+  }
+
+  function handleRemoveTimeSlot(indexToRemove) {
+    setTimeSlots((prev) => prev.filter((_, i) => i !== indexToRemove))
+    setFieldErrors((prev) => {
+      const next = {}
+      Object.keys(prev).forEach((key) => {
+        if (!key.startsWith('slot_')) {
+          next[key] = prev[key]
+        }
+      })
+      return next
+    })
   }
 
   function validateForm() {
     const nextErrors = {}
-    const start = timeToMinutes(form.startTime)
-    const end = timeToMinutes(form.endTime)
 
-    if (!form.date) {
+    if (!date) {
       nextErrors.date = 'Date is required.'
     }
 
-    if (start === null) {
-      nextErrors.startTime = 'Start time is required.'
-    } else if (start < 9 * 60) {
-      nextErrors.startTime = 'Start time cannot be before 9:00 AM.'
-    }
-
-    if (end === null) {
-      nextErrors.endTime = 'End time is required.'
-    } else if (end > 18 * 60) {
-      nextErrors.endTime = 'End time cannot be after 6:00 PM.'
-    } else if (start !== null && end <= start) {
-      nextErrors.endTime = 'End time must be after the start time.'
-    }
-
-    if (!form.topic.trim()) {
+    if (!topic.trim()) {
       nextErrors.topic = 'Topic is required.'
     }
 
-    if (!form.location.trim()) {
+    if (!location.trim()) {
       nextErrors.location = 'Office or room location is required.'
+    }
+
+    timeSlots.forEach((slot, index) => {
+      const start = timeToMinutes(slot.startTime)
+      const end = timeToMinutes(slot.endTime)
+
+      if (start === null) {
+        nextErrors[`slot_${index}_startTime`] = 'Start time is required.'
+      } else if (start < 9 * 60) {
+        nextErrors[`slot_${index}_startTime`] = 'Cannot be before 9:00 AM.'
+      }
+
+      if (end === null) {
+        nextErrors[`slot_${index}_endTime`] = 'End time is required.'
+      } else if (end > 18 * 60) {
+        nextErrors[`slot_${index}_endTime`] = 'Cannot be after 6:00 PM.'
+      } else if (start !== null && end <= start) {
+        nextErrors[`slot_${index}_endTime`] = 'End time must be after start time.'
+      }
+    })
+
+    // Check for internal overlaps between time slots
+    for (let i = 0; i < timeSlots.length; i++) {
+      const startA = timeToMinutes(timeSlots[i].startTime)
+      const endA = timeToMinutes(timeSlots[i].endTime)
+      if (startA === null || endA === null || endA <= startA) continue
+
+      for (let j = i + 1; j < timeSlots.length; j++) {
+        const startB = timeToMinutes(timeSlots[j].startTime)
+        const endB = timeToMinutes(timeSlots[j].endTime)
+        if (startB === null || endB === null || endB <= startB) continue
+
+        if (Math.max(startA, startB) < Math.min(endA, endB)) {
+          nextErrors[`slot_${j}_startTime`] = 'Overlaps with another slot.'
+          nextErrors[`slot_${j}_endTime`] = 'Overlaps with another slot.'
+        }
+      }
     }
 
     setFieldErrors(nextErrors)
@@ -78,14 +121,43 @@ export default function ManageSchedule() {
     setSubmitting(true)
 
     try {
-      await api.post('/schedules', form)
-      setForm(INITIAL_FORM)
-      setSuccess('Schedule created successfully.')
+      const requests = timeSlots.map((slot) =>
+        api.post('/schedules', {
+          date,
+          topic,
+          location,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+        }),
+      )
+
+      await Promise.all(requests)
+
+      setDate('')
+      setTopic('')
+      setLocation('')
+      setTimeSlots([{ startTime: '', endTime: '' }])
+      setFieldErrors({})
+      setSuccess(
+        timeSlots.length > 1
+          ? `All ${timeSlots.length} schedules created successfully.`
+          : 'Schedule created successfully.',
+      )
     } catch (requestError) {
       setError(getErrorMessage(requestError))
     } finally {
       setSubmitting(false)
     }
+  }
+
+  function handleReset() {
+    setDate('')
+    setTopic('')
+    setLocation('')
+    setTimeSlots([{ startTime: '', endTime: '' }])
+    setFieldErrors({})
+    setError('')
+    setSuccess('')
   }
 
   const rules = [
@@ -124,74 +196,129 @@ export default function ManageSchedule() {
             {error && <Alert tone="error">{error}</Alert>}
             {success && <Alert tone="success">{success}</Alert>}
 
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Input
-                label="Date"
-                name="date"
-                type="date"
-                value={form.date}
-                onChange={handleChange}
-                error={fieldErrors.date}
-                required
-              />
-              <div className="hidden sm:block" />
-              <Input
-                label="Start time"
-                name="startTime"
-                type="time"
-                min="09:00"
-                max="18:00"
-                step="900"
-                value={form.startTime}
-                onChange={handleChange}
-                error={fieldErrors.startTime}
-                required
-              />
-              <Input
-                label="End time"
-                name="endTime"
-                type="time"
-                min="09:00"
-                max="18:00"
-                step="900"
-                value={form.endTime}
-                onChange={handleChange}
-                error={fieldErrors.endTime}
-                required
-              />
-            </div>
+            <Input
+              label="Date"
+              name="date"
+              type="date"
+              value={date}
+              onChange={(e) => {
+                setDate(e.target.value)
+                if (fieldErrors.date) {
+                  setFieldErrors((prev) => ({ ...prev, date: '' }))
+                }
+              }}
+              error={fieldErrors.date}
+              required
+            />
 
             <Input
               label="Topic"
               name="topic"
               placeholder="e.g. Thesis consultation"
-              value={form.topic}
-              onChange={handleChange}
+              value={topic}
+              onChange={(e) => {
+                setTopic(e.target.value)
+                if (fieldErrors.topic) {
+                  setFieldErrors((prev) => ({ ...prev, topic: '' }))
+                }
+              }}
               error={fieldErrors.topic}
               required
             />
 
             <Input
-              label="Office / room location"
+              label="Office / Room Location"
               name="location"
               placeholder="e.g. Room 204, Engineering Building"
-              value={form.location}
-              onChange={handleChange}
+              value={location}
+              onChange={(e) => {
+                setLocation(e.target.value)
+                if (fieldErrors.location) {
+                  setFieldErrors((prev) => ({ ...prev, location: '' }))
+                }
+              }}
               error={fieldErrors.location}
               hint="Students will see this location in their appointment details."
               required
             />
 
+            {/* Time slots */}
+            <div className="space-y-3 border-t border-slate-200 pt-5">
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                  Time Slots
+                </label>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Add one or more consultation windows for this date.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {timeSlots.map((slot, index) => (
+                  <div key={index} className="flex items-start gap-2 sm:gap-3">
+                    <div className="grid flex-1 grid-cols-2 gap-3 sm:gap-4">
+                      <Input
+                        label="Start time"
+                        id={`startTime-${index}`}
+                        name={`startTime-${index}`}
+                        type="time"
+                        min="09:00"
+                        max="18:00"
+                        step="900"
+                        value={slot.startTime}
+                        onChange={(e) =>
+                          handleTimeSlotChange(index, 'startTime', e.target.value)
+                        }
+                        error={fieldErrors[`slot_${index}_startTime`]}
+                        required
+                      />
+                      <Input
+                        label="End time"
+                        id={`endTime-${index}`}
+                        name={`endTime-${index}`}
+                        type="time"
+                        min="09:00"
+                        max="18:00"
+                        step="900"
+                        value={slot.endTime}
+                        onChange={(e) =>
+                          handleTimeSlotChange(index, 'endTime', e.target.value)
+                        }
+                        error={fieldErrors[`slot_${index}_endTime`]}
+                        required
+                      />
+                    </div>
+                    {timeSlots.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTimeSlot(index)}
+                        className="mt-[22px] flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 cursor-pointer"
+                        title="Remove time slot"
+                        aria-label="Remove time slot"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={handleAddTimeSlot}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                >
+                  + Add another time slot
+                </button>
+              </div>
+            </div>
+
             <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => {
-                  setForm(INITIAL_FORM)
-                  setFieldErrors({})
-                  setError('')
-                  setSuccess('')
-                }}
+                onClick={handleReset}
               >
                 Reset
               </Button>
