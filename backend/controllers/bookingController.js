@@ -8,6 +8,19 @@ const {
   timesOverlap,
 } = require('../utils/timeUtils');
 
+// Helper function to format 24h time to 12h time with AM/PM
+function formatTime12Hour(timeString) {
+  if (!timeString) return '';
+  const [hourString, minute] = timeString.split(':');
+  let hour = parseInt(hourString, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  
+  hour = hour % 12;
+  hour = hour ? hour : 12; // the hour '0' should be '12'
+  
+  return `${hour}:${minute} ${ampm}`;
+}
+
 async function buildScheduleAvailability(scheduleId, maxSlots) {
   const bookedSlots = await Appointment.countDocuments({
     scheduleId,
@@ -120,11 +133,15 @@ async function bookAppointment(req, res, next) {
       status: 'accepted',
     });
 
+    // Format time for the notification
+    const formattedStartTime = formatTime12Hour(schedule.startTime);
+    const formattedEndTime = formatTime12Hour(schedule.endTime);
+
     const notification = await Notification.create({
       userId: schedule.facultyId,
       message: `${req.user.name} booked a consultation for "${schedule.topic}" on ${schedule.date
         .toISOString()
-        .slice(0, 10)} from ${schedule.startTime} to ${schedule.endTime}.`,
+        .slice(0, 10)} from ${formattedStartTime} to ${formattedEndTime}.`,
     });
 
     const scheduleUpdate = await buildScheduleAvailability(schedule._id, schedule.maxSlots);
@@ -199,9 +216,11 @@ async function cancelAppointment(req, res, next) {
     const scheduleDate = appointment.scheduleId
       ? appointment.scheduleId.date.toISOString().slice(0, 10)
       : 'the scheduled date';
+      
+    // Format time for the cancellation notification
     const scheduleTime = appointment.scheduleId?.startTime
-      ? `from ${appointment.scheduleId.startTime} to ${appointment.scheduleId.endTime}`
-      : `at ${appointment.timeSlot}`;
+      ? `from ${formatTime12Hour(appointment.scheduleId.startTime)} to ${formatTime12Hour(appointment.scheduleId.endTime)}`
+      : `at ${formatTime12Hour(appointment.timeSlot)}`;
 
     const notification = await Notification.create({
       userId: appointment.facultyId,
@@ -230,8 +249,39 @@ async function cancelAppointment(req, res, next) {
   }
 }
 
+async function markAttendance(req, res, next) {
+  try {
+    const { attendance } = req.body;
+
+    if (!['present', 'absent'].includes(attendance)) {
+      return res.status(400).json({ message: 'attendance must be present or absent' });
+    }
+
+    const appointment = await Appointment.findOne({
+      _id: req.params.id,
+      facultyId: req.user._id,
+    });
+
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    if (appointment.status === 'cancelled') {
+      return res.status(409).json({ message: 'Cannot mark attendance for a cancelled appointment' });
+    }
+
+    appointment.attendance = attendance;
+    await appointment.save();
+
+    return res.json(appointment);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   bookAppointment,
   getMyAppointments,
   cancelAppointment,
+  markAttendance,
 };

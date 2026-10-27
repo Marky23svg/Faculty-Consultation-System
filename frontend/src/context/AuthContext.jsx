@@ -56,6 +56,14 @@ export function AuthProvider({ children }) {
     [persistSession],
   )
 
+  const updateUser = useCallback((updatedFields) => {
+    setUser((current) => {
+      const next = { ...current, ...updatedFields }
+      localStorage.setItem(USER_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [])
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
@@ -77,6 +85,7 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(token && user),
       login,
       registerStudent,
+      updateUser,
       logout,
     }),
     [token, user, login, registerStudent, logout],

@@ -6,6 +6,7 @@ import Alert from '../../components/Alert'
 import Button from '../../components/Button'
 import Card from '../../components/Card'
 import Input from '../../components/Input'
+import Pagination from '../../components/Pagination'
 import PageHeader from '../../components/PageHeader'
 import Table from '../../components/Table'
 import { getErrorMessage } from '../../utils/errors'
@@ -26,6 +27,8 @@ export default function FacultyList() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   useEffect(() => {
     let ignore = false
@@ -58,17 +61,21 @@ export default function FacultyList() {
 
   const filteredFaculty = useMemo(() => {
     const term = search.trim().toLowerCase()
-
-    if (!term) {
-      return faculty
-    }
-
-    return faculty.filter((member) => {
-      return [member.name, member.email, member.department]
+    if (!term) return faculty
+    return faculty.filter((member) =>
+      [member.name, member.email, member.department]
         .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(term))
-    })
+        .some((value) => value.toLowerCase().includes(term)),
+    )
   }, [faculty, search])
+
+  const totalPages = Math.max(1, Math.ceil(filteredFaculty.length / itemsPerPage))
+  const paginatedFaculty = filteredFaculty.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  )
+
+  useMemo(() => { setCurrentPage(1) }, [search])
 
   const columns = [
     {
@@ -135,13 +142,21 @@ export default function FacultyList() {
       <Card>
         <Table
           columns={columns}
-          rows={filteredFaculty}
+          rows={paginatedFaculty}
           loading={loading}
           emptyMessage={
             search
               ? 'No faculty members match your search.'
               : 'No faculty accounts have been created yet.'
           }
+        />
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          itemsPerPage={itemsPerPage}
+          totalItems={filteredFaculty.length}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
         />
       </Card>
     </>

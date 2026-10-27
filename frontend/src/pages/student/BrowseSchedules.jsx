@@ -468,10 +468,11 @@ export default function BrowseSchedules() {
                   </span>
                 </div>
 
-                <p className="mt-3 text-xs leading-5 text-slate-500">
-                  You can select any date from today onward, even if no
-                  schedules are listed.
-                </p>
+                <p className="mt-4 flex items-center gap-1 text-xs text-slate-500">
+        <MapPin className="h-4.5 w-4.5 " />
+        Consultations are face-to-face. Confirm the office or room location
+        before your appointment.
+      </p>
               </>
             )}
           </div>
@@ -499,7 +500,7 @@ export default function BrowseSchedules() {
 
             <p className="mt-1 text-xs text-slate-500" aria-live="polite">
               {selectedDate
-                ? `${formatDate(selectedDate)} Â· ${selectedDateSchedules.length} consultation window${
+                ? `${formatDate(selectedDate)} - ${selectedDateSchedules.length} consultation window${
                     selectedDateSchedules.length === 1 ? '' : 's'
                   }`
                 : 'Choose a date to see the available times.'}
@@ -632,11 +633,7 @@ export default function BrowseSchedules() {
         </Card>
       </div>
 
-      <p className="mt-4 flex items-center gap-1.5 text-xs text-slate-500">
-        <MapPin className="h-3.5 w-3.5" />
-        Consultations are face-to-face. Confirm the office or room location
-        before your appointment.
-      </p>
+      
 
       <Modal
         open={Boolean(selectedSchedule)}

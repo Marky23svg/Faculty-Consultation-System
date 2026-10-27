@@ -9,6 +9,19 @@ const {
   getUtcDayRange,
 } = require('../utils/timeUtils');
 
+// Helper function to format 24h time to 12h time with AM/PM
+function formatTime12Hour(timeString) {
+  if (!timeString) return '';
+  const [hourString, minute] = timeString.split(':');
+  let hour = parseInt(hourString, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  
+  hour = hour % 12;
+  hour = hour ? hour : 12; // the hour '0' should be '12'
+  
+  return `${hour}:${minute} ${ampm}`;
+}
+
 async function createSchedule(req, res, next) {
   try {
     const { date, startTime, endTime, topic, location, maxSlots } = req.body;
@@ -194,7 +207,12 @@ async function cancelSchedule(req, res, next) {
         activeAppointments.map((appointment) => appointment.studentId.toString())
       ),
     ];
-    const message = `Your consultation for "${schedule.topic}" on ${scheduleDate} from ${schedule.startTime} to ${schedule.endTime} has been cancelled by ${req.user.name}.`;
+    
+    // Format time for the cancellation notification
+    const formattedStartTime = formatTime12Hour(schedule.startTime);
+    const formattedEndTime = formatTime12Hour(schedule.endTime);
+
+    const message = `Your consultation for "${schedule.topic}" on ${scheduleDate} from ${formattedStartTime} to ${formattedEndTime} has been cancelled by ${req.user.name}.`;
 
     let notifications = [];
 

@@ -132,7 +132,7 @@ export default function DashboardLayout() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex min-h-[43px] w-full items-center gap-3 rounded-lg px-3 text-[13px] font-semibold text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="flex min-h-[43px] w-full items-center gap-3 rounded-lg px-3 text-[13px] justify-center border border-red-300 font-semibold text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
           >
             <LogOut className="h-[18px] w-[18px]" />
             Sign out
@@ -162,7 +162,7 @@ export default function DashboardLayout() {
             <button
               type="button"
               onClick={() => navigate('/profile')}
-              className="flex items-center gap-2.5 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="flex items-center gap-2.5 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
               aria-label="Open profile"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-[11px] font-extrabold text-blue-700">

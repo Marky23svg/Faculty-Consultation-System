@@ -102,6 +102,50 @@ async function createFaculty(req, res, next) {
   }
 }
 
+async function updateProfile(req, res, next) {
+  try {
+    const { name, studentNumber, department } = req.body;
+    const { role } = req.user;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Name is required' });
+    }
+
+    const updates = { name: name.trim() };
+
+    if (role === 'student') {
+      if (!studentNumber || !studentNumber.trim()) {
+        return res.status(400).json({ message: 'Student number is required' });
+      }
+      updates.studentNumber = studentNumber.trim();
+    }
+
+    if (role === 'faculty') {
+      if (!department || !department.trim()) {
+        return res.status(400).json({ message: 'Department is required' });
+      }
+      updates.department = department.trim();
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      updates,
+      { new: true, runValidators: true },
+    );
+
+    return res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      studentNumber: user.studentNumber,
+      department: user.department,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function changePassword(req, res, next) {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -162,4 +206,5 @@ module.exports = {
   createFaculty,
   getFaculty,
   changePassword,
+  updateProfile,
 };

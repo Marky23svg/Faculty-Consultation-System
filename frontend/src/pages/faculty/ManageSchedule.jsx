@@ -109,7 +109,7 @@ export default function ManageSchedule() {
   return (
     <>
       <PageHeader
-        title="Manage Schedule"
+        title="Manage My Schedule"
         description="Create an availability window for student consultations."
         action={
           <Button as={Link} to="/faculty/schedules" variant="secondary">

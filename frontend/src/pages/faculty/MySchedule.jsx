@@ -214,6 +214,7 @@ export default function MySchedule() {
             size="sm"
             variant="danger"
             onClick={() => openCancel(schedule)}
+            className="cursor-pointer"
           >
             Cancel schedule
           </Button>
@@ -225,7 +226,7 @@ export default function MySchedule() {
   return (
     <>
       <PageHeader
-        title="My Schedule"
+        title="Browse My Schedule"
         description="Review your availability windows, slot usage, and cancel schedules when needed."
         action={
           <Button as={Link} to="/faculty/schedules/new">
@@ -270,6 +271,7 @@ export default function MySchedule() {
               variant="secondary"
               onClick={closeCancel}
               disabled={cancelling}
+              className="cursor-pointer"
             >
               Keep schedule
             </Button>
@@ -277,6 +279,7 @@ export default function MySchedule() {
               variant="danger"
               onClick={handleCancelSchedule}
               disabled={cancelling}
+              className="cursor-pointer"
             >
               {cancelling ? 'Cancelling...' : 'Cancel schedule'}
             </Button>
